@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://thmyelead.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Result</title>
+</head>
+<body>
+  <h1>Result</h1>
+  <p th:if="${result}">The result of the calculation is: <span th:text="${result}"></span></p>
+  <p th:if="${error}">Error: <span th:text="${error}"></span></p>
+</body>
+</html>
