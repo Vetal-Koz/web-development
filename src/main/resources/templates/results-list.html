@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Expressions results</title>
+</head>
+<body>
+<div th:each="result :${results} " class="col-lg-6 mb-2">
+    <div class="position-relative mb-3">
+        <a th:text="${result.expressionToCalculate}" class="h3 fw-bolder text-decoration-none link-dark stretched-link" href="#!">Project name</a>
+        <a th:text="${result.result}" class="h3 fw-bolder text-decoration-none link-dark stretched-link" href="#!">Project name</a>
+    </div>
+
+</div>
+</body>
+</html>

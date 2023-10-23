@@ -3,21 +3,25 @@ package web.dev.webdev.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import web.dev.webdev.dto.ExpressionCalcDto;
 import web.dev.webdev.models.ExpressionCalc;
 import web.dev.webdev.service.ExpressionService;
 
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.Long.parseLong;
 
 @Controller
 public class ExpressionController {
     private ExpressionService expressionService;
+    private int progress;
+
+
 
     @Autowired
     public ExpressionController(ExpressionService expressionService){this.expressionService = expressionService;}
@@ -28,6 +32,21 @@ public class ExpressionController {
         return "create-expression";
     }
 
+    @GetMapping("/results")
+    public String listResults(Model model){
+        List<ExpressionCalcDto> results = expressionService.findAllExpressions();
+        model.addAttribute("results", results);
+        return "results-list";
+    }
+
+    @GetMapping("/getProgress")
+    @ResponseBody
+    public Map<String, Integer> getProgress() {
+        Map<String, Integer> progressMap = new HashMap<>();
+        progressMap.put("progress", progress);
+
+        return progressMap;
+    }
     @PostMapping("/calculate")
     public String calculateAndSave(@RequestParam("expression") String expression, Model model){
         try {
@@ -48,10 +67,8 @@ public class ExpressionController {
         }
         return "result-page";
     }
-    @GetMapping("/result-page")
-    public String showResultPage() {
-        return "result-page"; // Return the name of the HTML template for the result page
-    }
+
+
 
     private double calculateMathExpression(String expression){
         int insideCircle = 0;
@@ -66,6 +83,7 @@ public class ExpressionController {
             if (distance <= 1) {
                 insideCircle++;
             }
+            progress = (int) ((i + 1) * 100 / numPoints);
         }
 
         double pi = 4.0 * insideCircle / numPoints;
