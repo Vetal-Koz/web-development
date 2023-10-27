@@ -8,18 +8,13 @@ import web.dev.webdev.dto.ExpressionCalcDto;
 import web.dev.webdev.models.ExpressionCalc;
 import web.dev.webdev.service.ExpressionService;
 
-
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import static java.lang.Long.parseLong;
 
 @Controller
 public class ExpressionController {
     private ExpressionService expressionService;
-    private int progress;
+
 
 
 
@@ -39,14 +34,6 @@ public class ExpressionController {
         return "results-list";
     }
 
-    @GetMapping("/getProgress")
-    @ResponseBody
-    public Map<String, Integer> getProgress() {
-        Map<String, Integer> progressMap = new HashMap<>();
-        progressMap.put("progress", progress);
-
-        return progressMap;
-    }
     @PostMapping("/calculate")
     public String calculateAndSave(@RequestParam("expression") String expression, Model model){
         try {
@@ -83,7 +70,6 @@ public class ExpressionController {
             if (distance <= 1) {
                 insideCircle++;
             }
-            progress = (int) ((i + 1) * 100 / numPoints);
         }
 
         double pi = 4.0 * insideCircle / numPoints;
