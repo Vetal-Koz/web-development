@@ -10,8 +10,50 @@
 <form action="/calculate" method="post">
   <label for="expression">Enter a Math Expression:</label>
   <input type="text" id="expression" name="expression" required>
-  <input type="submit" value="Calculate">
+    <button type="submit" onclick="startLoop()">Calculate</button>
 </form>
+<div id="progress"></div>
+<script>
+    function startLoop() {
+        const operationsCount = parseInt(document.getElementById("expression").value, 10);
+        if (isNaN(operationsCount) || operationsCount <= 0) {
+            alert("Будь ласка, введіть правильне число операцій.");
+            return;
+        }
 
+        let completedOperations = 0;
+
+        function performOperation() {
+
+
+            if(operationsCount > 100000) {
+                if(operationsCount >= 100000000)
+                {
+                    completedOperations +=135000;
+                }
+                else {
+                    completedOperations += 100000;
+                }
+            }
+            if(operationsCount <= 100000) {
+                completedOperations = operationsCount;
+            }
+            updateProgress();
+
+            if (completedOperations < operationsCount) {
+                // Якщо ще не виконані всі операції, викликайте performOperation знову через setTimeout або requestAnimationFrame
+                setTimeout(performOperation, 1);
+
+            }
+        }
+
+        function updateProgress() {
+            const percent = (completedOperations / operationsCount) * 100;
+            document.getElementById("progress").textContent = `Виконано ${completedOperations} / ${operationsCount} операцій (${percent.toFixed(2)}%)`;
+        }
+
+        performOperation();
+    }
+</script>
 </body>
 </html>
