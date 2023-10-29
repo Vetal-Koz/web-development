@@ -34,7 +34,7 @@ public class ExpressionController {
         return "results-list";
     }
 
-    @PostMapping("/calculate")
+    @PostMapping("/calculate/result")
     public String calculateAndSave(@RequestParam("expression") String expression, Model model){
         try {
             // Calculate the math expression (you need to implement this logic)
