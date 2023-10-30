@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .requestMatchers("/login", "/register","/css/**")
                 .permitAll()
+                .requestMatchers("/calculate").authenticated()
                 .and()
                 .formLogin(form -> form
                         .loginPage("/login")
