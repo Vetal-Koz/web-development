@@ -1,16 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
 <head>
     <meta charset="UTF-8">
     <title>Expressions results</title>
 </head>
 <body>
-<div th:each="result :${results} " class="col-lg-6 mb-2">
-    <div class="position-relative mb-3">
-        <a th:text="${result.expressionToCalculate}" class="h3 fw-bolder text-decoration-none link-dark stretched-link" href="#!">Project name</a>
-        <a th:text="${result.result}" class="h3 fw-bolder text-decoration-none link-dark stretched-link" href="#!">Project name</a>
-    </div>
-
-</div>
+<section layout:fragment="body" class="py-5">
+    <table class="table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th>Expression</th>
+            <th>Result</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="result : ${results}">
+            <td th:text="${result.expressionToCalculate}">Expression</td>
+            <td th:text="${result.result}">Result</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
 </body>
 </html>

@@ -27,6 +27,7 @@ public class ExpressionController {
         return "create-expression";
     }
 
+
     @GetMapping("/results")
     public String listResults(Model model){
         List<ExpressionCalcDto> results = expressionService.findAllExpressions();
