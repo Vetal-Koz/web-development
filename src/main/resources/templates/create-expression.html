@@ -53,11 +53,13 @@
                     if(operationsCount <= 100000) {
                         completedOperations = operationsCount;
                     }
-                    updateProgress();
+                    updateProgress()
+
+
 
                     if (completedOperations < operationsCount) {
                         // Якщо ще не виконані всі операції, викликайте performOperation знову через setTimeout або requestAnimationFrame
-                        setTimeout(performOperation, 1);
+                        setTimeout(performOperation, 0);
                     } else {
                         // Hide the cancel button when the operation is complete
                         document.getElementById("cancelButton").style.display = "none";
