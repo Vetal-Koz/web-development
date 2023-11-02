@@ -1,13 +1,16 @@
 <!DOCTYPE html>
-<html lang="en"
-      xmlns:th="http://thmyelead.org">
+<html xmlns:th="http://thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
 <head>
     <meta charset="UTF-8">
     <title>Result</title>
 </head>
 <body>
+<section layout:fragment="body" class="py-5">
   <h1>Result</h1>
   <p th:if="${result}">The result of the calculation is: <span th:text="${result}"></span></p>
   <p th:if="${error}">Error: <span th:text="${error}"></span></p>
+</section>
 </body>
 </html>

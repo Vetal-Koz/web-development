@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ExpressionServiceImpl implements ExpressionService {
+    private volatile boolean calculationCancelled = false;
     private ExpressionRepository expressionRepository;
 
     @Autowired
@@ -28,12 +29,47 @@ public class ExpressionServiceImpl implements ExpressionService {
         return expressionRepository.save(expressionCalc);
     }
 
+    @Override
+    public void cancelLastCalculation() {
+        calculationCancelled = true;
+
+    }
+
+    @Override
+    public void delete(Long expressionId) {
+        expressionRepository.deleteById(expressionId);
+    }
+
     private ExpressionCalcDto mapToExpressionCalcDto(ExpressionCalc expressionCalc){
         ExpressionCalcDto expressionCalcDto = ExpressionCalcDto.builder()
                 .id(expressionCalc.getId())
                 .expressionToCalculate(expressionCalc.getExpressionToCalculate())
                 .result(expressionCalc.getResult())
+                .createdOn(expressionCalc.getCreatedOn())
                 .build();
         return expressionCalcDto;
+    }
+
+    @Override
+    public double calculateMathExpression(String expression){
+        int insideCircle = 0;
+        long numPoints = Long.parseLong(expression);
+
+        for (int i = 0; i < numPoints; i++) {
+            if(calculationCancelled){
+                break;
+            }
+            double x = Math.random();
+            double y = Math.random();
+
+            double distance = Math.sqrt(x * x + y * y);
+
+            if (distance <= 1) {
+                insideCircle++;
+            }
+        }
+        calculationCancelled = false;
+        double pi = 4.0 * insideCircle / numPoints;
+        return pi;
     }
 }

@@ -13,6 +13,7 @@ import java.util.List;
 
 @Controller
 public class ExpressionController {
+    private volatile boolean calculationCancelled = false;
     private ExpressionService expressionService;
 
 
@@ -38,42 +39,31 @@ public class ExpressionController {
     @PostMapping("/calculate/result")
     public String calculateAndSave(@RequestParam("expression") String expression, Model model){
         try {
-            // Calculate the math expression (you need to implement this logic)
-            double result = calculateMathExpression(expression);
+            double result = expressionService.calculateMathExpression(expression);
+            if (!calculationCancelled) {
+                // Calculate the math expression (you need to implement this logic)
 
-            // Save the expression and result to the database
-            ExpressionCalc expressionCalc = new ExpressionCalc();
-            expressionCalc.setExpressionToCalculate(expression);
-            expressionCalc.setResult(result);
-            expressionService.saveExpression(expressionCalc);
-
+                // Save the expression and result to the database
+                ExpressionCalc expressionCalc = new ExpressionCalc();
+                expressionCalc.setExpressionToCalculate(expression);
+                expressionCalc.setResult(result);
+                expressionService.saveExpression(expressionCalc);
+            }
             // Pass the result to the view
             model.addAttribute("result", result);
         } catch (Exception e) {
             // Handle any errors or invalid expressions here
             model.addAttribute("error", "Invalid expression: " + e.getMessage());
         }
+        calculationCancelled = false;
         return "result-page";
     }
 
-
-
-    private double calculateMathExpression(String expression){
-        int insideCircle = 0;
-        long numPoints = Long.parseLong(expression);
-
-        for (int i = 0; i < numPoints; i++) {
-            double x = Math.random();
-            double y = Math.random();
-
-            double distance = Math.sqrt(x * x + y * y);
-
-            if (distance <= 1) {
-                insideCircle++;
-            }
-        }
-
-        double pi = 4.0 * insideCircle / numPoints;
-        return pi;
+    @GetMapping("/calculate/cancel")
+    public String cancelCalculation(Model model){
+        calculationCancelled = true;
+        expressionService.cancelLastCalculation();
+        return "redirect:/calculate";
     }
+
 }

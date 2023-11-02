@@ -9,4 +9,9 @@ public interface ExpressionService {
     List<ExpressionCalcDto> findAllExpressions();
 
     ExpressionCalc saveExpression(ExpressionCalc expressionCalc);
+
+    void cancelLastCalculation();
+
+    double calculateMathExpression(String expression);
+    void delete(Long expressionId);
 }

@@ -8,4 +8,5 @@ import java.util.Optional;
 
 public interface ExpressionRepository extends JpaRepository<ExpressionCalc, Long> {
     Optional<ExpressionCalc> findById(Long url);
+    ExpressionCalc findTopByOrderByCreatedOnDesc();
 }

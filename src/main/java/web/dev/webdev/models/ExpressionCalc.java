@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -18,4 +21,6 @@ public class ExpressionCalc {
     private long id;
     private String expressionToCalculate;
     private double result;
+    @CreationTimestamp
+    private LocalDateTime createdOn;
 }
