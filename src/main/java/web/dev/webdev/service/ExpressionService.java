@@ -4,6 +4,7 @@ import web.dev.webdev.dto.ExpressionCalcDto;
 import web.dev.webdev.models.ExpressionCalc;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 public interface ExpressionService {
     List<ExpressionCalcDto> findAllExpressions();
@@ -14,4 +15,6 @@ public interface ExpressionService {
 
     double calculateMathExpression(String expression);
     void delete(Long expressionId);
+
+    Future<Double> calculateMathExpressionAsync(String expression);
 }

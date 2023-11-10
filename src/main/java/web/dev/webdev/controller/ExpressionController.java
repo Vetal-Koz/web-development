@@ -9,6 +9,7 @@ import web.dev.webdev.models.ExpressionCalc;
 import web.dev.webdev.service.ExpressionService;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 
 @Controller
@@ -36,27 +37,16 @@ public class ExpressionController {
         return "results-list";
     }
 
-    @PostMapping("/calculate/result")
-    public String calculateAndSave(@RequestParam("expression") String expression, Model model){
+    @PostMapping("/calculate")
+    public String calculateAndSave(@RequestParam("expression") String expression, Model model) {
         try {
-            double result = expressionService.calculateMathExpression(expression);
-            if (!calculationCancelled) {
-                // Calculate the math expression (you need to implement this logic)
-
-                // Save the expression and result to the database
-                ExpressionCalc expressionCalc = new ExpressionCalc();
-                expressionCalc.setExpressionToCalculate(expression);
-                expressionCalc.setResult(result);
-                expressionService.saveExpression(expressionCalc);
-            }
-            // Pass the result to the view
-            model.addAttribute("result", result);
+            Future<Double> resultFuture = expressionService.calculateMathExpressionAsync(expression);
+            model.addAttribute("resultFuture", resultFuture);
         } catch (Exception e) {
-            // Handle any errors or invalid expressions here
             model.addAttribute("error", "Invalid expression: " + e.getMessage());
         }
-        calculationCancelled = false;
-        return "result-page";
+
+        return "create-expression";
     }
 
     @GetMapping("/calculate/cancel")

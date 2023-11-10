@@ -9,76 +9,13 @@
 <main class="flex-shrink-0">
     <section layout:fragment="body" class="py-5">
         <h1>Math Expression Calculator</h1>
-        <form action="/calculate/result" method="post">
+        <form action="/calculate" method="post">
             <label for="expression">Enter a Math Expression:</label>
             <input class="btn-primary" type="text" id="expression" name="expression" required maxlength="12">
             <button type="submit" class="btn btn-primary" onclick="startLoop()">Calculate</button>
-            <a th:href="@{/calculate/cancel}" class="btn btn-danger" onclick="cancelOperation()" id="cancelButton" style="display: none;">Cancel</a>
         </form>
         <div id="progress"></div>
-        <script>
-            let operationCancelled = false;
-            function startLoop() {
-                operationCancelled = false;
-                const operationsCount = parseInt(document.getElementById("expression").value, 10);
-                if (isNaN(operationsCount) || operationsCount <= 0) {
-                    alert("Будь ласка, введіть правильне число операцій.");
-                    return;
-                }
 
-                // Show the cancel button
-                document.getElementById("cancelButton").style.display = "inline";
-                document.getElementById("cancelButton").addEventListener("click", function() {
-                    operationCancelled = true;
-                    document.getElementById("cancelButton").style.display = "none";
-                });
-
-                let completedOperations = 0;
-
-                function performOperation() {
-                    if (operationCancelled) {
-                        document.getElementById("cancelButton").style.display = "none";
-                        return;
-                    }
-
-                    if(operationsCount > 100000) {
-                        if(operationsCount >= 100000000)
-                        {
-                            completedOperations +=135000;
-                        }
-                        else {
-                            completedOperations += 100000;
-                        }
-                    }
-                    if(operationsCount <= 100000) {
-                        completedOperations = operationsCount;
-                    }
-                    updateProgress()
-
-
-
-                    if (completedOperations < operationsCount) {
-                        // Якщо ще не виконані всі операції, викликайте performOperation знову через setTimeout або requestAnimationFrame
-                        setTimeout(performOperation, 0);
-                    } else {
-                        // Hide the cancel button when the operation is complete
-                        document.getElementById("cancelButton").style.display = "none";
-                    }
-                }
-
-                function updateProgress() {
-                    const percent = (completedOperations / operationsCount) * 100;
-                    document.getElementById("progress").textContent = `Виконано ${completedOperations} / ${operationsCount} операцій (${percent.toFixed(2)}%)`;
-                }
-
-                performOperation();
-            }
-
-            function cancelOperation() {
-                operationCancelled = true;
-                document.getElementById("cancelButton").style.display = "none";
-            }
-        </script>
     </section>
 </main>
 </body>

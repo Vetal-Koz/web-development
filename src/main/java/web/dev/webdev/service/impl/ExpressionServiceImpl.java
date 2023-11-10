@@ -1,5 +1,7 @@
 package web.dev.webdev.service.impl;
 
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
 import web.dev.webdev.dto.ExpressionCalcDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -8,6 +10,7 @@ import web.dev.webdev.models.ExpressionCalc;
 import web.dev.webdev.repository.ExpressionRepository;
 
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,6 +53,22 @@ public class ExpressionServiceImpl implements ExpressionService {
         return expressionCalcDto;
     }
 
+
+    @Async
+    public Future<Double> calculateMathExpressionAsync(String expression) {
+        try {
+            double result = calculateMathExpression(expression);
+            if (!calculationCancelled) {
+                ExpressionCalc expressionCalc = new ExpressionCalc();
+                expressionCalc.setExpressionToCalculate(expression);
+                expressionCalc.setResult(result);
+                saveExpression(expressionCalc);
+            }
+            return new AsyncResult<>(result);
+        } catch (Exception e) {
+            throw new RuntimeException("Error calculating expression: " + e.getMessage(), e);
+        }
+    }
     @Override
     public double calculateMathExpression(String expression){
         int insideCircle = 0;
