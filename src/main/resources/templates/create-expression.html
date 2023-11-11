@@ -1,21 +1,95 @@
+<!DOCTYPE html>
 <html xmlns:th="http://thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}">
 <head>
     <title>Create Expression</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 </head>
 <body>
 
 <main class="flex-shrink-0">
     <section layout:fragment="body" class="py-5">
         <h1>Math Expression Calculator</h1>
-        <form action="/calculate" method="post">
+        <form>
             <label for="expression">Enter a Math Expression:</label>
             <input class="btn-primary" type="text" id="expression" name="expression" required maxlength="12">
-            <button type="submit" class="btn btn-primary" onclick="startLoop()">Calculate</button>
+            <button type="button" class="btn btn-primary" onclick="sendMessage()">Calculate</button>
         </form>
-        <div id="progress"></div>
+        <div id="output"></div>
+        <div id="history">
+            <h2>Expression History:</h2>
+            <div id="progress">Прогрес: 0%</div>
+            <ul id="expressionList"></ul>
+        </div>
+        <script>
+            var socket = new SockJS('/websocket-example');
+            var stompClient = Stomp.over(socket);
+            var expressionHistory = [];
 
+
+
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/progress', function (response) {
+                    var progress;
+                    try {
+                        progress = JSON.parse(response.body);
+                        console.log('Received progress:', progress);
+
+                        // Display progress
+                        var progressDiv = document.getElementById('progress');
+                        progressDiv.innerHTML = 'Прогрес: ' + progress + '%';
+                    } catch (error) {
+                        console.error('Error parsing progress JSON:', error);
+                    }
+                });
+
+
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/messages', function (response) {
+                    var parsedData;
+                    try {
+                        parsedData = JSON.parse(response.body);
+                        console.log('Parsed JSON:', parsedData);
+
+                        if (parsedData && parsedData.payload) {
+                            var decodedPayload = atob(parsedData.payload);
+                            var payloadObject = JSON.parse(decodedPayload);
+
+                            if (payloadObject && payloadObject.value !== undefined) {
+                                var value = payloadObject.value;
+                                console.log('Received message:', value);
+                                var outputDiv = document.getElementById('output');
+                                outputDiv.innerHTML = 'Отримано: ' + value;
+                            } else {
+                                console.error('Invalid JSON structure or missing "value" property in the payload.');
+                            }
+                        } else {
+                            console.error('Invalid JSON structure or missing "payload" property.');
+                        }
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                    }
+                });
+            });
+
+            function sendMessage() {
+                var inputValue = document.getElementById('expression').value;
+                expressionHistory.push(inputValue);
+
+                // Update expression history display
+                var expressionList = document.getElementById('expressionList');
+                var listItem = document.createElement('li');
+                listItem.appendChild(document.createTextNode(inputValue));
+                expressionList.appendChild(listItem);
+
+                // Your existing code to send the message
+                stompClient.send("/app/sendMessage", {}, JSON.stringify({ 'value': inputValue }));
+            }
+        </script>
     </section>
 </main>
 </body>

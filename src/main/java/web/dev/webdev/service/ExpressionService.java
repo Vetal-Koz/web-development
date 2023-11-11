@@ -1,5 +1,6 @@
 package web.dev.webdev.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import web.dev.webdev.dto.ExpressionCalcDto;
 import web.dev.webdev.models.ExpressionCalc;
 
@@ -13,7 +14,6 @@ public interface ExpressionService {
 
     void cancelLastCalculation();
 
-    double calculateMathExpression(String expression);
     void delete(Long expressionId);
 
     Future<Double> calculateMathExpressionAsync(String expression);

@@ -1,6 +1,16 @@
 package web.dev.webdev.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.handler.annotation.Headers;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -37,16 +47,27 @@ public class ExpressionController {
         return "results-list";
     }
 
-    @PostMapping("/calculate")
-    public String calculateAndSave(@RequestParam("expression") String expression, Model model) {
+
+
+    @MessageMapping("/sendMessage")
+    @SendTo("/topic/messages")
+    public String sendMessage(@Payload String expression, @Headers MessageHeaders headers) {
+        System.out.println(expression);
+
         try {
-            Future<Double> resultFuture = expressionService.calculateMathExpressionAsync(expression);
-            model.addAttribute("resultFuture", resultFuture);
-        } catch (Exception e) {
-            model.addAttribute("error", "Invalid expression: " + e.getMessage());
+            // Створюємо об'єкт ObjectMapper
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            // Читаємо JSON-рядок у JsonNode
+            JsonNode jsonNode = objectMapper.readTree(expression);
+            String expressionCalc = jsonNode.get("value").asText();
+            expressionService.calculateMathExpressionAsync(expressionCalc);
+
+        } catch (JsonProcessingException e){
+            System.out.println(e);
         }
 
-        return "create-expression";
+        return expression; // You can modify the return type as needed
     }
 
     @GetMapping("/calculate/cancel")
