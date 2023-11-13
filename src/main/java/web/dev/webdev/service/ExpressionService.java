@@ -5,6 +5,7 @@ import web.dev.webdev.dto.ExpressionCalcDto;
 import web.dev.webdev.models.ExpressionCalc;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 public interface ExpressionService {
@@ -16,5 +17,5 @@ public interface ExpressionService {
 
     void delete(Long expressionId);
 
-    Future<Double> calculateMathExpressionAsync(String expression);
+    CompletableFuture<Double> calculateMathExpressionAsync(String expression);
 }

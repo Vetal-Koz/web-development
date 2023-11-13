@@ -3,6 +3,7 @@ package web.dev.webdev.service.impl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.SessionException;
+import lombok.ToString;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.scheduling.annotation.Async;
@@ -17,6 +18,8 @@ import web.dev.webdev.models.ExpressionCalc;
 import web.dev.webdev.repository.ExpressionRepository;
 
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -67,16 +70,20 @@ public class ExpressionServiceImpl implements ExpressionService {
 
 
     @Async
-    public Future<Double> calculateMathExpressionAsync(String expression) {
+    public CompletableFuture<Double> calculateMathExpressionAsync(String expression) {
+        CompletableFuture<Double> future = new CompletableFuture<>();
 
         double result;
         double progress = 0;
+        double lastSentProgress = -1.0;
+        Long id = new Random().nextLong(100);
+
         try {
             int insideCircle = 0;
             long numPoints = Long.parseLong(expression);
 
             for (int i = 0; i < numPoints; i++) {
-                if(calculationCancelled){
+                if (calculationCancelled) {
                     break;
                 }
                 double x = Math.random();
@@ -87,26 +94,37 @@ public class ExpressionServiceImpl implements ExpressionService {
                 if (distance <= 1) {
                     insideCircle++;
                 }
-                progress = (double) ((i+1 / numPoints) * 100);
-                sendProgress(progress);
 
+                progress = ((i + 1.0) / numPoints) * 100;
+                if (Math.abs(progress - lastSentProgress) >= 1) {
+                    sendProgress(Long.toString(id),progress);
+                    lastSentProgress = ((i + 1.0) / numPoints) * 100; // Update last sent progress
+                }
+                if(i == numPoints -1){
+                    sendProgress(Long.toString(id), 100);
+                }
             }
 
             result = 4.0 * insideCircle / numPoints;
+
             if (!calculationCancelled) {
                 ExpressionCalc expressionCalc = new ExpressionCalc();
                 expressionCalc.setExpressionToCalculate(expression);
                 expressionCalc.setResult(result);
                 saveExpression(expressionCalc);
             }
-            return new AsyncResult<>(result);
+
+            future.complete(result);
         } catch (Exception e) {
-            throw new RuntimeException("Error calculating expression: " + e.getMessage(), e);
+            future.completeExceptionally(new RuntimeException("Error calculating expression: " + e.getMessage(), e));
         }
+
+        return future;
     }
 
-    private void sendProgress(double progress) {
-        messagingTemplate.convertAndSend("/topic/progress", progress);
+    private void sendProgress(String expressionId,double progress)
+    {
+        messagingTemplate.convertAndSend("/topic/progress/" + expressionId, progress);
     }
 
 

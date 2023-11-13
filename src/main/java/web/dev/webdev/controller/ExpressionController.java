@@ -19,6 +19,7 @@ import web.dev.webdev.models.ExpressionCalc;
 import web.dev.webdev.service.ExpressionService;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 
@@ -26,6 +27,8 @@ import java.util.concurrent.Future;
 public class ExpressionController {
     private volatile boolean calculationCancelled = false;
     private ExpressionService expressionService;
+    private CompletableFuture<Void> previousCalculation = CompletableFuture.completedFuture(null);
+
 
 
 
@@ -51,23 +54,46 @@ public class ExpressionController {
 
     @MessageMapping("/sendMessage")
     @SendTo("/topic/messages")
-    public String sendMessage(@Payload String expression, @Headers MessageHeaders headers) {
+    public CompletableFuture<String> sendMessage(@Payload String expression, @Headers MessageHeaders headers) {
         System.out.println(expression);
 
+        // Create a CompletableFuture to represent the asynchronous operation
+        CompletableFuture<String> future = new CompletableFuture<>();
+
         try {
-            // Створюємо об'єкт ObjectMapper
+            // Create an object ObjectMapper
             ObjectMapper objectMapper = new ObjectMapper();
 
-            // Читаємо JSON-рядок у JsonNode
+            // Read JSON string into JsonNode
             JsonNode jsonNode = objectMapper.readTree(expression);
             String expressionCalc = jsonNode.get("value").asText();
-            expressionService.calculateMathExpressionAsync(expressionCalc);
 
-        } catch (JsonProcessingException e){
+            // Asynchronously calculate the math expression
+            expressionService.calculateMathExpressionAsync(expressionCalc)
+                    .thenCompose(result -> {
+                        // Perform additional asynchronous operations if needed
+                        // ...
+
+                        // Return the result as the new completion stage
+                        return CompletableFuture.completedFuture(result);
+                    })
+                    .thenAccept(result -> {
+                        // Complete the CompletableFuture when the entire chain is done
+                        future.complete(expression);
+                    })
+                    .exceptionally(ex -> {
+                        // Handle exceptions and complete the CompletableFuture exceptionally
+                        future.completeExceptionally(ex);
+                        return null;
+                    });
+
+        } catch (JsonProcessingException e) {
             System.out.println(e);
+            // Complete the CompletableFuture exceptionally in case of an exception
+            future.completeExceptionally(e);
         }
 
-        return expression; // You can modify the return type as needed
+        return future;
     }
 
     @GetMapping("/calculate/cancel")
