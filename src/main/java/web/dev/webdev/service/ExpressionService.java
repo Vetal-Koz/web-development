@@ -18,4 +18,6 @@ public interface ExpressionService {
     void delete(Long expressionId);
 
     CompletableFuture<Double> calculateMathExpressionAsync(String expression);
+
+    void cancelTask(Long taskId);
 }

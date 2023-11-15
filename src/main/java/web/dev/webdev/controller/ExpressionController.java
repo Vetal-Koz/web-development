@@ -57,11 +57,9 @@ public class ExpressionController {
     public CompletableFuture<String> sendMessage(@Payload String expression, @Headers MessageHeaders headers) {
         System.out.println(expression);
 
-        // Create a CompletableFuture to represent the asynchronous operation
         CompletableFuture<String> future = new CompletableFuture<>();
 
         try {
-            // Create an object ObjectMapper
             ObjectMapper objectMapper = new ObjectMapper();
 
             // Read JSON string into JsonNode
@@ -71,8 +69,7 @@ public class ExpressionController {
             // Asynchronously calculate the math expression
             expressionService.calculateMathExpressionAsync(expressionCalc)
                     .thenCompose(result -> {
-                        // Perform additional asynchronous operations if needed
-                        // ...
+
 
                         // Return the result as the new completion stage
                         return CompletableFuture.completedFuture(result);
@@ -96,10 +93,9 @@ public class ExpressionController {
         return future;
     }
 
-    @GetMapping("/calculate/cancel")
-    public String cancelCalculation(Model model){
-        calculationCancelled = true;
-        expressionService.cancelLastCalculation();
+    @GetMapping("/calculate/{taskId}/cancel")
+    public String cancelCalculation(@PathVariable("taskId") Long taskId){
+        expressionService.cancelTask(taskId);
         return "redirect:/calculate";
     }
 

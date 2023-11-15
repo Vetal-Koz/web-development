@@ -45,10 +45,9 @@
             var stompClient = Stomp.over(socket);
             var expressionHistory = [];
 
-
-
             stompClient.connect({}, function (frame) {
                 console.log('Connected: ' + frame);
+
                 stompClient.subscribe('/topic/progress/*', function (message) {
                     try {
                         var topicPattern = '/topic/progress/';
@@ -58,28 +57,45 @@
                         console.log('Progress:', progress);
                         console.log("Message body", message.body);
 
-                        // Check if the expressionId already exists in the progress list
                         var existingItem = document.querySelector('#progress-list li[data-expression-id="' + expressionId + '"]');
 
                         if (existingItem) {
-                            // If it exists, update the progress value
                             existingItem.textContent = 'Expression ID: ' + expressionId + ', Progress: ' + progress + '%';
+
+                            var cancelButton = document.createElement('button');
+                            cancelButton.textContent = 'Cancel';
+                            cancelButton.setAttribute('data-task-id', expressionId);
+                            cancelButton.addEventListener('click', function () {
+                                var taskId = this.getAttribute('data-task-id');
+                                cancelTask(taskId);
+                            });
+
+                            var existingButton = existingItem.querySelector('button[data-task-id="' + expressionId + '"]');
+                            if (!existingButton) {
+                                existingItem.appendChild(cancelButton);
+                            }
                         } else {
-                            // If it doesn't exist, create a new list item
                             var progressList = document.getElementById('progress-list');
                             var listItem = document.createElement('li');
                             listItem.textContent = 'Expression ID: ' + expressionId + ', Progress: ' + progress + '%';
                             listItem.setAttribute('data-expression-id', expressionId);
+
+                            var cancelButton = document.createElement('button');
+                            cancelButton.textContent = 'Cancel';
+                            cancelButton.setAttribute('data-task-id', expressionId);
+                            cancelButton.addEventListener('click', function () {
+                                var taskId = this.getAttribute('data-task-id');
+                                cancelTask(taskId);
+                            });
+
+                            listItem.appendChild(cancelButton);
                             progressList.appendChild(listItem);
                         }
-
                     } catch (error) {
                         console.error('Error parsing progress JSON:', error);
                     }
                 });
 
-
-                console.log('Connected: ' + frame);
                 stompClient.subscribe('/topic/messages', function (response) {
                     var parsedData;
                     try {
@@ -108,7 +124,6 @@
             });
 
             function extractExpressionId(topic, pattern) {
-                // Use a regular expression to match the dynamic part of the topic
                 var regex = new RegExp(pattern + '(.+)$');
                 var match = topic.match(regex);
 
@@ -124,14 +139,24 @@
                 var inputValue = document.getElementById('expression').value;
                 expressionHistory.push(inputValue);
 
-                // Update expression history display
                 var expressionList = document.getElementById('expressionList');
                 var listItem = document.createElement('li');
                 listItem.appendChild(document.createTextNode(inputValue));
                 expressionList.appendChild(listItem);
 
-                // Your existing code to send the message
                 stompClient.send("/app/sendMessage", {}, JSON.stringify({ 'value': inputValue }));
+            }
+
+            function cancelTask(taskId) {
+                fetch('/calculate/' + taskId + '/cancel', {
+                    method: 'GET'
+                })
+                    .then(function(response) {
+                        console.log('Task canceled:', taskId);
+                    })
+                    .catch(function(error) {
+                        console.error('Error canceling task:', error);
+                    });
             }
         </script>
     </section>

@@ -17,14 +17,16 @@ import web.dev.webdev.service.ExpressionService;
 import web.dev.webdev.models.ExpressionCalc;
 import web.dev.webdev.repository.ExpressionRepository;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Service
 public class ExpressionServiceImpl implements ExpressionService {
+    private final Map<Long, CompletableFuture<Double>> activeTasks = new ConcurrentHashMap<>();
     private volatile boolean calculationCancelled = false;
     private ExpressionRepository expressionRepository;
     private final SimpMessagingTemplate messagingTemplate;
@@ -42,6 +44,20 @@ public class ExpressionServiceImpl implements ExpressionService {
         return expressionCalcs.stream().map((expressionCalc) -> mapToExpressionCalcDto(expressionCalc)).collect(Collectors.toList());
     }
 
+    @Override
+    public void cancelTask(Long taskId) {
+        CompletableFuture<Double> task = activeTasks.get(taskId);
+        try {
+            if (task != null && !task.isDone()) {
+                task.cancel(true);
+
+                activeTasks.remove(taskId);
+            }
+        } catch (Exception e){
+            System.out.println("task " + taskId + "are canceled");
+        }
+
+    }
     @Override
     public ExpressionCalc saveExpression(ExpressionCalc expressionCalc) {
         return expressionRepository.save(expressionCalc);
@@ -69,21 +85,25 @@ public class ExpressionServiceImpl implements ExpressionService {
     }
 
 
-    @Async
+    @Async("asyncExecutor")
     public CompletableFuture<Double> calculateMathExpressionAsync(String expression) {
         CompletableFuture<Double> future = new CompletableFuture<>();
 
-        double result;
+
         double progress = 0;
         double lastSentProgress = -1.0;
         Long id = new Random().nextLong(100);
+        activeTasks.put(id, future);
+
+        System.out.println(getActiveTaskCount());
 
         try {
+            double result; // Move the result variable inside the try block
             int insideCircle = 0;
             long numPoints = Long.parseLong(expression);
 
             for (int i = 0; i < numPoints; i++) {
-                if (calculationCancelled) {
+                if (future.isCancelled()) {
                     break;
                 }
                 double x = Math.random();
@@ -94,20 +114,22 @@ public class ExpressionServiceImpl implements ExpressionService {
                 if (distance <= 1) {
                     insideCircle++;
                 }
-
+                if (future.isCancelled()) {
+                    break;
+                }
                 progress = ((i + 1.0) / numPoints) * 100;
                 if (Math.abs(progress - lastSentProgress) >= 1) {
-                    sendProgress(Long.toString(id),progress);
+                    sendProgress(Long.toString(id), progress);
                     lastSentProgress = ((i + 1.0) / numPoints) * 100; // Update last sent progress
                 }
-                if(i == numPoints -1){
+                if (i == numPoints - 1) {
                     sendProgress(Long.toString(id), 100);
                 }
             }
 
             result = 4.0 * insideCircle / numPoints;
 
-            if (!calculationCancelled) {
+            if (!future.isCancelled()) {
                 ExpressionCalc expressionCalc = new ExpressionCalc();
                 expressionCalc.setExpressionToCalculate(expression);
                 expressionCalc.setResult(result);
@@ -115,18 +137,32 @@ public class ExpressionServiceImpl implements ExpressionService {
             }
 
             future.complete(result);
+        } catch (CompletionException e) {
+            // Task was cancelled, handle it as needed
+            // For example, you can log the cancellation or perform cleanup
+            System.out.println("Task was cancelled: " + e.getMessage());
+        } catch (CancellationException e) {
+            // Task was cancelled, handle it as needed
+            // For example, you can log the cancellation or perform cleanup
+            System.out.println("Task was cancelled: " + e.getMessage());
         } catch (Exception e) {
             future.completeExceptionally(new RuntimeException("Error calculating expression: " + e.getMessage(), e));
         }
 
-        return future;
+        // Remove the completed future from activeTasks when it completes
+        return future.whenComplete((result, throwable) -> {
+            activeTasks.remove(future);
+        });
     }
+
 
     private void sendProgress(String expressionId,double progress)
     {
         messagingTemplate.convertAndSend("/topic/progress/" + expressionId, progress);
     }
 
-
+    public int getActiveTaskCount() {
+        return activeTasks.size();
+    }
 
 }
